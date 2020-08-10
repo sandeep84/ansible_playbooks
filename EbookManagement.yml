@@ -1,0 +1,45 @@
+---
+  # Follow instructions from http://will.tip.dhappy.org/lib/calibre/dedrm/DeDRM_plugin_ReadMe.txt
+  - name: "Install EBook management tools"
+    hosts: localhost
+    connection: local
+    tasks:
+        - name: Install WINE
+          become_user: root
+          become: yes
+          shell: apt install -y wine winetricks
+          register: "output"
+
+        - name: Install Adobe Digital Editions
+          shell: winetricks -q adobe_diged4
+
+        - name: Install Python
+          shell: curl -s https://epubee.com/download/python-2.6.2.msi -o python-2.6.2.msi &&
+                 wine msiexec /i python-2.6.2.msi
+
+        - name: Install PyCrypto
+          shell: curl -s http://www.voidspace.org.uk/downloads/pycrypto-2.1.0.win32-py2.6.zip -o pycrypto-2.1.0.win32-py2.6.zip &&
+                 unzip -o pycrypto-2.1.0.win32-py2.6.zip &&
+                 wine pycrypto-2.1.0.win32-py2.6.exe
+
+        - name: Install cloudLibrary
+          shell: curl https://usestrwebaccess.blob.core.windows.net/apps/pc/cloudLibrary-2.3.1708230914-Setup.exe -o cloudLibrary.exe &&
+                 wine cloudLibrary.exe
+
+        - name: Install Calibre
+          become_user: root
+          become: yes
+          shell: apt install -y flatpak &&
+                 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo &&
+                 flatpak install flathub com.calibre_ebook.calibre
+          register: "output"
+        
+        - name: Download DeDRM tools
+          shell: curl http://will.tip.dhappy.org/lib/calibre/dedrm/DeDRM_plugin.zip -o DeDRM_plugin.zip &&
+                 unzip -o -d DeDRM_plugin DeDRM_plugin.zip
+        
+        - name: Start Adobe Digital Editions (for authorization)
+          shell: wine "/home/sandeep/.wine/drive_c/Program Files (x86)/Adobe/Adobe Digital Editions 4.5/DigitalEditions.exe"
+
+        - name: Extract Adobe key
+          shell: wine /home/sandeep/.wine/drive_c/Python26/python.exe DeDRM_plugin/adobekey.py
